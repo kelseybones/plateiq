@@ -1,6 +1,37 @@
+import Icon from './Icon.jsx';
 import { ProgressBar, Chip } from './Primitives.jsx';
 
-const MacroBreakdown = ({ data, variant = "donut" }) => {
+function formatNavDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+}
+
+const DateNav = ({ selectedDate, onPrevDay, onNextDay, isToday }) => (
+  <div className="row" style={{ alignItems: "center", gap: 6 }}>
+    <button onClick={onPrevDay} style={{
+      width: 32, height: 32, borderRadius: 9, background: "var(--card-2)", border: "1px solid var(--border)",
+      display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-2)",
+    }}>
+      <Icon name="back" size={16}/>
+    </button>
+    <div className="mono" style={{
+      fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
+      color: isToday ? "var(--accent)" : "var(--text-2)", minWidth: 120, textAlign: "center",
+    }}>
+      {isToday ? "Today" : formatNavDate(selectedDate)}
+    </div>
+    <button onClick={onNextDay} disabled={isToday} style={{
+      width: 32, height: 32, borderRadius: 9, background: "var(--card-2)", border: "1px solid var(--border)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: isToday ? "var(--text-3)" : "var(--text-2)",
+      opacity: isToday ? 0.35 : 1,
+    }}>
+      <Icon name="chevron" size={16}/>
+    </button>
+  </div>
+);
+
+const MacroBreakdown = ({ data, variant = "donut", selectedDate, onPrevDay, onNextDay, isToday }) => {
   const totalKcal = data.consumed;
   const pKcal = data.p * 4, cKcal = data.c * 4, fKcal = data.f * 9;
   const sum = pKcal + cKcal + fKcal || 1;
@@ -9,8 +40,11 @@ const MacroBreakdown = ({ data, variant = "donut" }) => {
   return (
     <div style={{ padding: "0 0 110px" }}>
       <div style={{ padding: "10px 24px 14px" }}>
-        <div className="mono up" style={{ fontSize: 10, color: "var(--text-3)", letterSpacing: "0.16em" }}>MACROS · TODAY</div>
-        <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", margin: "6px 0 0", lineHeight: 1.1 }}>Breakdown</h1>
+        <div className="mono up" style={{ fontSize: 10, color: "var(--text-3)", letterSpacing: "0.16em", marginBottom: 10 }}>MACROS · BREAKDOWN</div>
+        <div className="row between" style={{ alignItems: "center" }}>
+          <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", margin: 0, lineHeight: 1.1 }}>Breakdown</h1>
+          <DateNav selectedDate={selectedDate} onPrevDay={onPrevDay} onNextDay={onNextDay} isToday={isToday}/>
+        </div>
       </div>
 
       <div style={{ padding: "0 20px 18px" }}>

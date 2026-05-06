@@ -317,6 +317,17 @@ const Settings = ({ data, onUpdate }) => {
   const [weekly, setWeekly] = useState(false);
   const [profileName, setProfileName] = useState("Alex Kowalski");
   const [profileEmail, setProfileEmail] = useState("alex@plateiq.app");
+  const [appleHealthConnected, setAppleHealthConnected] = useState(false);
+  const [appleHealthConnecting, setAppleHealthConnecting] = useState(false);
+
+  const connectAppleHealth = () => {
+    setAppleHealthConnecting(true);
+    // Simulate the HealthKit authorization request flow
+    setTimeout(() => {
+      setAppleHealthConnecting(false);
+      setAppleHealthConnected(true);
+    }, 1800);
+  };
 
   const goalLabel = { muscle: "Muscle gain", fat: "Fat loss", maint: "Maintenance" }[data.goal] || "Maintenance";
   const levelLabel = ACTIVITY_LEVELS.find(l => l.id === data.level)?.title || "Moderately active";
@@ -409,8 +420,66 @@ const Settings = ({ data, onUpdate }) => {
         <SettingRow icon="trend" label="Weekly recap email" last><Toggle value={weekly} onChange={setWeekly}/></SettingRow>
       </SettingSection>
 
+      {/* Connections */}
+      <div style={{ padding: "0 20px 16px" }}>
+        <div className="row between" style={{ padding: "0 4px 10px" }}>
+          <span className="section-title">Connections</span>
+        </div>
+        <div className="card" style={{ padding: "16px 20px" }}>
+          <div className="row between" style={{ alignItems: "center" }}>
+            <div className="row gap-12" style={{ alignItems: "center" }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 11, flex: "none",
+                background: appleHealthConnected ? "#ff375f" : "var(--card-2)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill={appleHealthConnected ? "white" : "var(--text-3)"}>
+                  <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>Apple Health</div>
+                <div className="mono" style={{ fontSize: 10, color: "var(--text-3)", marginTop: 2, letterSpacing: "0.06em" }}>
+                  {appleHealthConnected ? "SYNCING · NUTRITION DATA" : "NOT CONNECTED"}
+                </div>
+              </div>
+            </div>
+            {appleHealthConnected ? (
+              <div className="row gap-6" style={{ alignItems: "center" }}>
+                <div style={{ width: 7, height: 7, borderRadius: 999, background: "var(--accent)" }}/>
+                <span className="mono" style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>LIVE</span>
+              </div>
+            ) : (
+              <button onClick={connectAppleHealth} disabled={appleHealthConnecting}
+                style={{
+                  height: 34, padding: "0 14px", borderRadius: 10,
+                  background: "var(--accent)", color: "var(--accent-ink)",
+                  fontFamily: "var(--f-mono)", fontSize: 11, fontWeight: 700,
+                  letterSpacing: "0.06em", textTransform: "uppercase",
+                  opacity: appleHealthConnecting ? 0.6 : 1,
+                }}>
+                {appleHealthConnecting ? "Connecting…" : "Connect"}
+              </button>
+            )}
+          </div>
+          {appleHealthConnected && (
+            <div style={{ marginTop: 14, padding: "12px 14px", background: "var(--card-2)", borderRadius: 10, border: "1px solid var(--border)" }}>
+              <div className="row gap-16">
+                <SyncStat label="STEPS" value="8,240"/>
+                <SyncStat label="ACTIVE CAL" value="412"/>
+                <SyncStat label="LAST SYNC" value="Just now"/>
+              </div>
+            </div>
+          )}
+          <div style={{ marginTop: 12, padding: "10px 12px", background: "var(--card-2)", borderRadius: 8, border: "1px solid var(--border)" }}>
+            <div className="mono" style={{ fontSize: 10, color: "var(--text-3)", letterSpacing: "0.06em", lineHeight: 1.5 }}>
+              Reads nutrition, steps & active calories. Full HealthKit access requires the iOS native app.
+            </div>
+          </div>
+        </div>
+      </div>
+
       <SettingSection title="Account">
-        <SettingRow icon="user"     label="Connected apps" value="Apple Health · Strava" chevron/>
         <SettingRow icon="settings" label="Privacy & data" chevron/>
         <SettingRow icon="trash"    label="Sign out" danger last/>
       </SettingSection>
@@ -421,6 +490,13 @@ const Settings = ({ data, onUpdate }) => {
     </div>
   );
 };
+
+const SyncStat = ({ label, value }) => (
+  <div>
+    <div className="mono up" style={{ fontSize: 8, color: "var(--text-3)", letterSpacing: "0.14em" }}>{label}</div>
+    <div className="mono" style={{ fontSize: 13, fontWeight: 600, marginTop: 2 }}>{value}</div>
+  </div>
+);
 
 const SettingSection = ({ title, children }) => (
   <div style={{ padding: "0 20px 16px" }}>

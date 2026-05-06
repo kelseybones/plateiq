@@ -26,6 +26,15 @@ const FoodLog = ({ onClose, onAdd, onUpdate, mealSlot, setMealSlot, editing, cus
   const [customMode, setCustomMode] = useState(showCustom || false);
   const [quickMode, setQuickMode] = useState(showQuick || false);
 
+  const openScanner = async () => {
+    try {
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      setScanning(true);
+    } catch {
+      setScanning(true); // still show scanner UI even if permission denied
+    }
+  };
+
   const filtered = FOODS.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
   const recent = [...FOODS].sort((a, b) => b.freq - a.freq).slice(0, 6);
   const slots = ["breakfast", "lunch", "dinner", "snack"];
@@ -68,7 +77,7 @@ const FoodLog = ({ onClose, onAdd, onUpdate, mealSlot, setMealSlot, editing, cus
             style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 14, fontFamily: "var(--f-display)" }}/>
           {q && <button onClick={() => setQ("")} style={{ color: "var(--text-3)" }}><Icon name="close" size={16}/></button>}
         </div>
-        <button onClick={() => setScanning(true)} style={{
+        <button onClick={openScanner} style={{
           width: 52, height: 52, borderRadius: 14, background: "var(--card)", border: "1px solid var(--border)",
           display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)",
         }}>

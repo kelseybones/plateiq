@@ -2,24 +2,51 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import { Ring, ProgressBar, Ticker, Chip } from './Primitives.jsx';
 
-const ScreenHeader = ({ greeting, date, streak }) => (
-  <div className="row between" style={{ padding: "8px 24px 18px" }}>
-    <div>
-      <div className="mono" style={{ fontSize: 11, color: "var(--text-3)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-        {date}
-      </div>
-      <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em", marginTop: 2 }}>
-        {greeting}
-      </div>
-    </div>
-    <div className="row gap-8" style={{
-      padding: "8px 12px", borderRadius: 999,
-      border: "1px solid var(--border)",
-      background: "var(--card)",
+function formatNavDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+}
+
+const DateNav = ({ selectedDate, onPrevDay, onNextDay, isToday }) => (
+  <div className="row" style={{ alignItems: "center", gap: 6 }}>
+    <button onClick={onPrevDay} style={{
+      width: 32, height: 32, borderRadius: 9, background: "var(--card)", border: "1px solid var(--border)",
+      display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-2)",
     }}>
-      <Icon name="fire" size={16} />
-      <span className="mono" style={{ fontSize: 12, fontWeight: 600 }}>{streak} day</span>
+      <Icon name="back" size={16}/>
+    </button>
+    <div className="mono" style={{
+      fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
+      color: isToday ? "var(--accent)" : "var(--text-2)", minWidth: 120, textAlign: "center",
+    }}>
+      {isToday ? "Today" : formatNavDate(selectedDate)}
     </div>
+    <button onClick={onNextDay} disabled={isToday} style={{
+      width: 32, height: 32, borderRadius: 9, background: "var(--card)", border: "1px solid var(--border)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: isToday ? "var(--text-3)" : "var(--text-2)",
+      opacity: isToday ? 0.35 : 1,
+    }}>
+      <Icon name="chevron" size={16}/>
+    </button>
+  </div>
+);
+
+const ScreenHeader = ({ greeting, selectedDate, isToday, onPrevDay, onNextDay, streak }) => (
+  <div style={{ padding: "8px 24px 18px" }}>
+    <div className="row between" style={{ alignItems: "center", marginBottom: 10 }}>
+      <div>
+        <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em" }}>{greeting}</div>
+      </div>
+      <div className="row gap-8" style={{
+        padding: "8px 12px", borderRadius: 999,
+        border: "1px solid var(--border)", background: "var(--card)",
+      }}>
+        <Icon name="fire" size={16}/>
+        <span className="mono" style={{ fontSize: 12, fontWeight: 600 }}>{streak} day</span>
+      </div>
+    </div>
+    <DateNav selectedDate={selectedDate} onPrevDay={onPrevDay} onNextDay={onNextDay} isToday={isToday}/>
   </div>
 );
 
@@ -36,7 +63,7 @@ const RingHero = ({ consumed, goal }) => {
           <>
             <div className="mono up" style={{ fontSize: 10, color: "var(--text-3)", letterSpacing: "0.16em" }}>EATEN</div>
             <div className="mono" style={{ fontSize: 56, fontWeight: 600, lineHeight: 1, letterSpacing: "-0.04em", marginTop: 4 }}>
-              <Ticker value={consumed} />
+              <Ticker value={consumed}/>
             </div>
             <div className="mono" style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>
               of {goal.toLocaleString()} kcal
@@ -88,19 +115,26 @@ const MacroBar = ({ name, code, value, goal, color, big = false }) => {
   );
 };
 
+const SlotIcon = ({ slot }) => {
+  const icons = { breakfast: "sunrise", lunch: "sun", dinner: "moon", snack: "leaf" };
+  return (
+    <div style={{
+      width: 42, height: 42, borderRadius: 11,
+      background: "var(--card-2)", display: "flex", alignItems: "center", justifyContent: "center",
+      color: "var(--text-2)", flex: "none",
+    }}>
+      <Icon name={icons[slot] || "leaf"} size={18}/>
+    </div>
+  );
+};
+
 const MealRow = ({ meal, onClick }) => (
   <button onClick={onClick} style={{
     display: "flex", width: "100%", padding: "14px 16px",
     background: "var(--card)", borderRadius: 14, border: "1px solid var(--border)",
     alignItems: "center", gap: 12, textAlign: "left",
   }}>
-    <div style={{
-      width: 42, height: 42, borderRadius: 11,
-      background: "var(--card-2)", display: "flex", alignItems: "center", justifyContent: "center",
-      color: "var(--text-2)", flex: "none",
-    }}>
-      <span className="mono" style={{ fontSize: 10, fontWeight: 600 }}>{meal.time}</span>
-    </div>
+    <SlotIcon slot={meal.slot}/>
     <div style={{ flex: 1, minWidth: 0 }}>
       <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.005em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {meal.name}
@@ -117,10 +151,10 @@ const MealRow = ({ meal, onClick }) => (
 );
 
 export const MEAL_SLOTS = [
-  { id: "breakfast", label: "Breakfast", icon: "sunrise",  window: "06–10" },
-  { id: "lunch",     label: "Lunch",     icon: "sun",      window: "12–14" },
-  { id: "dinner",    label: "Dinner",    icon: "moon",     window: "18–21" },
-  { id: "snack",     label: "Snacks",    icon: "leaf",     window: "ANY" },
+  { id: "breakfast", label: "Breakfast", icon: "sunrise", window: "06–10" },
+  { id: "lunch",     label: "Lunch",     icon: "sun",     window: "12–14" },
+  { id: "dinner",    label: "Dinner",    icon: "moon",    window: "18–21" },
+  { id: "snack",     label: "Snacks",    icon: "leaf",    window: "ANY" },
 ];
 
 const LogViewToggle = ({ view, onChange }) => (
@@ -182,10 +216,10 @@ const MealGroupCard = ({ slot, meals, onOpen }) => {
   );
 };
 
-const LogSection = ({ meals, view, onView, onMeal, onOpenMeal }) => (
+const LogSection = ({ meals, view, onView, onMeal, onOpenMeal, isToday, onLog }) => (
   <div style={{ padding: "8px 20px 0" }}>
     <div className="row between" style={{ marginBottom: 12, padding: "0 4px", alignItems: "center" }}>
-      <span className="section-title">Today's log</span>
+      <span className="section-title">Food log</span>
       <LogViewToggle view={view} onChange={onView}/>
     </div>
     {view === "meals" ? (
@@ -197,8 +231,15 @@ const LogSection = ({ meals, view, onView, onMeal, onOpenMeal }) => (
         ))}
       </div>
     ) : meals.length === 0 ? (
-      <div className="card" style={{ padding: 24, textAlign: "center", color: "var(--text-3)" }}>
-        <div className="mono" style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}>No meals logged yet</div>
+      <div className="card" style={{ padding: 28, textAlign: "center" }}>
+        <div className="mono" style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-3)" }}>
+          Nothing logged
+        </div>
+        {isToday && (
+          <button className="btn btn-primary" onClick={onLog} style={{ marginTop: 14, height: 44, fontSize: 14 }}>
+            <Icon name="plus" size={16} stroke={2.2}/> Add first meal
+          </button>
+        )}
       </div>
     ) : (
       <div className="col gap-8">
@@ -208,11 +249,10 @@ const LogSection = ({ meals, view, onView, onMeal, onOpenMeal }) => (
   </div>
 );
 
-// Layout variants
-const DashRingFirst = ({ data, onLog, onMeal, view, onView, onOpenMeal }) => (
+const DashRingFirst = ({ data, onLog, onMeal, view, onView, onOpenMeal, selectedDate, onPrevDay, onNextDay, isToday }) => (
   <div style={{ padding: "0 0 110px" }}>
-    <ScreenHeader greeting="Hey, Alex." date="WED · MAY 06" streak={42} />
-    <RingHero consumed={data.consumed} goal={data.calorieGoal} />
+    <ScreenHeader greeting="Hey, Alex." selectedDate={selectedDate} isToday={isToday} onPrevDay={onPrevDay} onNextDay={onNextDay} streak={42}/>
+    <RingHero consumed={data.consumed} goal={data.calorieGoal}/>
     <div style={{ padding: "0 20px 16px" }}>
       <div className="card" style={{ padding: "20px 22px" }}>
         <MacroBar name="Protein" value={data.p} goal={data.pGoal} color="var(--m-protein)" big/>
@@ -223,111 +263,24 @@ const DashRingFirst = ({ data, onLog, onMeal, view, onView, onOpenMeal }) => (
         </div>
       </div>
     </div>
-    <div style={{ padding: "0 20px 16px" }}>
-      <button className="btn btn-primary btn-block" onClick={onLog}>
-        <Icon name="plus" size={18} stroke={2.2}/> Log a meal
-      </button>
-    </div>
-    <LogSection meals={data.meals} view={view} onView={onView} onMeal={onMeal} onOpenMeal={onOpenMeal}/>
+    {isToday && (
+      <div style={{ padding: "0 20px 16px" }}>
+        <button className="btn btn-primary btn-block" onClick={onLog}>
+          <Icon name="plus" size={18} stroke={2.2}/> Log a meal
+        </button>
+      </div>
+    )}
+    <LogSection meals={data.meals} view={view} onView={onView} onMeal={onMeal} onOpenMeal={onOpenMeal} isToday={isToday} onLog={onLog}/>
   </div>
 );
 
-const DashSplit = ({ data, onLog, onMeal, view, onView, onOpenMeal }) => {
-  const pct = Math.round((data.consumed / data.calorieGoal) * 100);
+export const Dashboard = ({ data, layout, onLog, onMeal, view, onView, onOpenMeal, selectedDate, onPrevDay, onNextDay, isToday }) => {
   return (
-    <div style={{ padding: "0 0 110px" }}>
-      <ScreenHeader greeting="Hey, Alex." date="WED · MAY 06" streak={42} />
-      <div style={{ padding: "0 20px 16px", display: "flex", gap: 14 }}>
-        <div className="card" style={{ padding: 18, flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <Ring value={data.consumed} goal={data.calorieGoal} size={150} stroke={11} label={
-            <>
-              <div className="mono" style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.04em" }}>{pct}%</div>
-              <div className="mono up" style={{ fontSize: 9, color: "var(--text-3)", letterSpacing: "0.16em" }}>OF KCAL</div>
-            </>
-          }/>
-          <div className="row gap-6" style={{ marginTop: 14 }}>
-            <span className="mono" style={{ fontSize: 17, fontWeight: 600 }}>{data.consumed.toLocaleString()}</span>
-            <span className="mono" style={{ fontSize: 11, color: "var(--text-3)" }}>/ {data.calorieGoal.toLocaleString()}</span>
-          </div>
-        </div>
-        <div className="card" style={{ padding: 18, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <div>
-            <div className="mono up" style={{ fontSize: 9, color: "var(--text-3)", letterSpacing: "0.16em" }}>PROTEIN</div>
-            <div className="mono" style={{ fontSize: 38, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1, marginTop: 6 }}>
-              {data.p}<span style={{ fontSize: 16, color: "var(--text-3)" }}>g</span>
-            </div>
-            <div className="mono" style={{ fontSize: 11, color: "var(--text-3)", marginTop: 4 }}>of {data.pGoal}g · {Math.round(data.p/data.pGoal*100)}%</div>
-          </div>
-          <ProgressBar value={data.p} goal={data.pGoal} accent="var(--accent)" height={8}/>
-          <div className="row between" style={{ marginTop: 4 }}>
-            <div>
-              <div className="mono up" style={{ fontSize: 9, color: "var(--text-3)" }}>CARBS</div>
-              <div className="mono" style={{ fontSize: 14, fontWeight: 600 }}>{data.c}g</div>
-            </div>
-            <div>
-              <div className="mono up" style={{ fontSize: 9, color: "var(--text-3)" }}>FAT</div>
-              <div className="mono" style={{ fontSize: 14, fontWeight: 600 }}>{data.f}g</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div style={{ padding: "0 20px 16px" }}>
-        <button className="btn btn-primary btn-block" onClick={onLog}>
-          <Icon name="plus" size={18} stroke={2.2}/> Log a meal
-        </button>
-      </div>
-      <LogSection meals={data.meals} view={view} onView={onView} onMeal={onMeal} onOpenMeal={onOpenMeal}/>
-    </div>
+    <DashRingFirst
+      data={data} onLog={onLog} onMeal={onMeal} view={view} onView={onView} onOpenMeal={onOpenMeal}
+      selectedDate={selectedDate} onPrevDay={onPrevDay} onNextDay={onNextDay} isToday={isToday}
+    />
   );
-};
-
-const DashStacked = ({ data, onLog, onMeal, view, onView, onOpenMeal }) => {
-  const remaining = Math.max(0, data.calorieGoal - data.consumed);
-  const pct = Math.round((data.consumed / data.calorieGoal) * 100);
-  return (
-    <div style={{ padding: "0 0 110px" }}>
-      <ScreenHeader greeting="Hey, Alex." date="WED · MAY 06" streak={42} />
-      <div style={{ padding: "0 24px 16px" }}>
-        <div className="mono up" style={{ fontSize: 10, color: "var(--text-3)", letterSpacing: "0.16em" }}>REMAINING TODAY</div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 6 }}>
-          <div className="mono" style={{ fontSize: 76, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 0.9 }}>
-            <Ticker value={remaining}/>
-          </div>
-          <div className="mono up" style={{ fontSize: 12, color: "var(--text-3)", letterSpacing: "0.16em" }}>kcal</div>
-        </div>
-        <div className="row between" style={{ marginTop: 14, alignItems: "baseline" }}>
-          <div className="mono" style={{ fontSize: 12, color: "var(--text-2)" }}>
-            <span style={{ color: "var(--text)" }}>{data.consumed.toLocaleString()}</span>
-            <span style={{ color: "var(--text-3)" }}> / {data.calorieGoal.toLocaleString()} kcal</span>
-          </div>
-          <div className="mono" style={{ fontSize: 12, color: "var(--accent)" }}>{pct}%</div>
-        </div>
-        <div style={{ marginTop: 8 }}>
-          <ProgressBar value={data.consumed} goal={data.calorieGoal} accent="var(--accent)" height={6}/>
-        </div>
-      </div>
-      <div style={{ padding: "0 20px 16px" }}>
-        <div className="card" style={{ padding: "20px 22px" }}>
-          <MacroBar name="Protein" value={data.p} goal={data.pGoal} color="var(--m-protein)" big/>
-          <div style={{ height: 14 }}/>
-          <MacroBar name="Carbs" value={data.c} goal={data.cGoal} color="var(--m-carbs)" big/>
-          <div style={{ height: 14 }}/>
-          <MacroBar name="Fat" value={data.f} goal={data.fGoal} color="var(--m-fat)" big/>
-        </div>
-      </div>
-      <div style={{ padding: "0 20px 16px" }}>
-        <button className="btn btn-primary btn-block" onClick={onLog}>
-          <Icon name="plus" size={18} stroke={2.2}/> Log a meal
-        </button>
-      </div>
-      <LogSection meals={data.meals} view={view} onView={onView} onMeal={onMeal} onOpenMeal={onOpenMeal}/>
-    </div>
-  );
-};
-
-export const Dashboard = ({ data, layout, onLog, onMeal, view, onView, onOpenMeal }) => {
-  const Comp = layout === "split" ? DashSplit : layout === "stacked" ? DashStacked : DashRingFirst;
-  return <Comp data={data} onLog={onLog} onMeal={onMeal} view={view} onView={onView} onOpenMeal={onOpenMeal}/>;
 };
 
 const MiniMacro = ({ label, value, color }) => (

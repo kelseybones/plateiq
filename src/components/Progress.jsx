@@ -44,18 +44,18 @@ const Progress = ({ data }) => {
 
       <div style={{ padding: "0 20px 16px" }}>
         <div className="card" style={{ padding: "18px 18px 14px" }}>
-          <div className="row between" style={{ marginBottom: 14, alignItems: "center" }}>
-            <div>
+          <div style={{ marginBottom: 14 }}>
+            <div className="row between" style={{ alignItems: "center", marginBottom: 10 }}>
               <div className="mono up" style={{ fontSize: 10, color: "var(--text-3)", letterSpacing: "0.14em" }}>{r.label.toUpperCase()}</div>
-              <div className="row gap-8" style={{ alignItems: "baseline", marginTop: 4 }}>
-                <span className="mono" style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.03em" }}>{avg.toLocaleString()}</span>
-                <span className="mono" style={{ fontSize: 12, color: "var(--text-3)" }}>avg {metric === "kcal" ? "kcal" : "g"}</span>
+              <div className="row gap-6">
+                {Object.keys(RANGES).map(k => (
+                  <Chip key={k} active={range === k} onClick={() => setRange(k)}>{k}</Chip>
+                ))}
               </div>
             </div>
-            <div className="row gap-6">
-              {Object.keys(RANGES).map(k => (
-                <Chip key={k} active={range === k} onClick={() => setRange(k)}>{k}</Chip>
-              ))}
+            <div className="row gap-8" style={{ alignItems: "baseline" }}>
+              <span className="mono" style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.03em" }}>{avg.toLocaleString()}</span>
+              <span className="mono" style={{ fontSize: 12, color: "var(--text-3)" }}>avg {metric === "kcal" ? "kcal" : "g"}</span>
             </div>
           </div>
 
@@ -121,7 +121,7 @@ const BarChart = ({ series, max, goal, days }) => {
   return (
     <div style={{ position: "relative", height: H + 24 }}>
       <svg width="100%" height={H} viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" style={{ display: "block" }}>
-        <line x1="0" y1={goalY} x2="100" y2={goalY} stroke="var(--text-3)" strokeWidth="0.3" strokeDasharray="1 1.5"/>
+        <line x1="0" y1={goalY} x2="100" y2={goalY} stroke="var(--accent)" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.6"/>
         {series.map((v, i) => {
           const h = (v / max) * H;
           const isToday = i === series.length - 1;
